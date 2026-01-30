@@ -1,0 +1,9 @@
+{
+  "name": "dialogflow-vercel",
+  "version": "1.0.0",
+  "main": "api/webhook.js",
+  "dependencies": {
+    "dialogflow-fulfillment": "^0.6.1",
+    "node-fetch": "^2.6.7"
+  }
+}
