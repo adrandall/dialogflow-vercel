@@ -35,15 +35,15 @@ const quickRepliesMap = {
 // --------------------
 async function sendIdleMessages() {
   try {
-    // Set inactivity threshold (e.g., 15 minutes)
     const now = new Date();
-    const threshold = new Date(now.getTime() - 30 * 1000).toISOString();
+    const inactivityThreshold = new Date(now.getTime() - 15 * 60 * 1000).toISOString(); // 15 minutes
 
-    // Fetch users inactive since threshold
+    // Fetch inactive users who haven't received an idle message recently
     const { data: inactiveUsers, error } = await supabase
       .from("user_activity")
-      .select("psid, last_active")
-      .lt("last_active", threshold);
+      .select("psid, last_active, last_idle_sent")
+      .lt("last_active", inactivityThreshold)
+      .or("last_idle_sent.is.null,last_idle_sent.lt." + inactivityThreshold);
 
     if (error) {
       console.error("❌ Supabase fetch error:", error);
@@ -51,14 +51,13 @@ async function sendIdleMessages() {
     }
 
     for (const user of inactiveUsers) {
-      // Send idle message
       const idleText = "Thank you for your time! 👋 Please come back again.";
       await sendMessage(user.psid, idleText);
 
-      // Optionally update last_active to now so we don't spam
+      // Update last_idle_sent to now so we don't send again
       await supabase
         .from("user_activity")
-        .update({ last_active: now.toISOString() })
+        .update({ last_idle_sent: now.toISOString() })
         .eq("psid", user.psid);
     }
   } catch (err) {
@@ -176,6 +175,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
