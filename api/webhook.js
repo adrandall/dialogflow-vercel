@@ -37,7 +37,7 @@ async function sendIdleMessages() {
   try {
     // Set inactivity threshold (e.g., 15 minutes)
     const now = new Date();
-    const threshold = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+    const threshold = new Date(now.getTime() - 30 * 1000).toISOString();
 
     // Fetch users inactive since threshold
     const { data: inactiveUsers, error } = await supabase
@@ -176,5 +176,6 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
