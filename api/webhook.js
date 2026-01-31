@@ -100,7 +100,7 @@ export default async (req, res) => {
     // --------------------
     // GREETING INTENT
     // --------------------
-    if (intentName === "Default Welcome Intent") {
+    if (intentName === "Greeting") {
       await sendMessage(psid, greetingText, quickRepliesMap[lang]);
       return res.status(200).json({ fulfillmentText: "" });
     }
@@ -120,3 +120,4 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
