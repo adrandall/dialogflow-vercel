@@ -3,9 +3,10 @@ const { franc } = require("franc-min");
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
-// --------------------
-// QUICK REPLIES TRANSLATIONS
-// --------------------
+if (!PAGE_ACCESS_TOKEN) {
+  console.error("❌ PAGE_ACCESS_TOKEN is missing!");
+}
+
 const quickRepliesMap = {
   en: [
     { content_type: "text", title: "Properties & Packages", payload: "house" },
@@ -25,14 +26,14 @@ const quickRepliesMap = {
   ]
 };
 
-// --------------------
-// SEND MESSAGE
-// --------------------
 async function sendMessage(psid, text, quickReplies = null) {
-  try {
-    const messagePayload = { recipient: { id: psid }, message: { text } };
-    if (quickReplies) messagePayload.message.quick_replies = quickReplies;
+  if (!PAGE_ACCESS_TOKEN) return;
+  if (!psid) return;
 
+  const messagePayload = { recipient: { id: psid }, message: { text } };
+  if (quickReplies) messagePayload.message.quick_replies = quickReplies;
+
+  try {
     await axios.post(
       `https://graph.facebook.com/v17.0/me/messages`,
       messagePayload,
@@ -43,19 +44,13 @@ async function sendMessage(psid, text, quickReplies = null) {
   }
 }
 
-// --------------------
-// SMART LANGUAGE DETECTION
-// --------------------
 function detectLanguageSmart(text) {
-  if (!text || text.length < 3) return "en"; // default English
+  if (!text || typeof text !== "string" || text.length < 3) return "en";
   const langCode = franc(text);
-  if (langCode === "tgl") return "tl"; // Tagalog
-  return "en"; // default English
+  if (langCode === "tgl") return "tl";
+  return "en";
 }
 
-// --------------------
-// WEBHOOK
-// --------------------
 module.exports = async (req, res) => {
   try {
     if (req.method === "GET") return res.status(200).send("Webhook alive");
@@ -63,20 +58,20 @@ module.exports = async (req, res) => {
 
     const body = req.body;
 
-    // Dialogflow intent
     const intentName = body.queryResult?.intent?.displayName || "UnknownIntent";
 
-    // PSID extraction
-    let psid = body.originalDetectIntentRequest?.payload?.data?.sender?.id;
-    if (!psid && body.originalDetectIntentRequest?.payload?.sender?.id) {
-      psid = body.originalDetectIntentRequest.payload.sender.id;
-    }
+    let psid =
+      body.originalDetectIntentRequest?.payload?.data?.sender?.id ||
+      body.originalDetectIntentRequest?.payload?.sender?.id;
 
     const userMessage = body.queryResult?.queryText || "";
 
-    if (!psid) return res.status(200).json({ fulfillmentText: "" });
+    if (!psid) {
+      console.warn("⚠️ PSID is missing, cannot send message");
+      return res.status(200).json({ fulfillmentText: "" });
+    }
 
-    // Fetch first name
+    // Fetch first name safely
     let firstName = "there";
     try {
       const fbRes = await axios.get(`https://graph.facebook.com/${psid}`, {
@@ -87,32 +82,25 @@ module.exports = async (req, res) => {
       console.warn("⚠️ Failed to fetch first name");
     }
 
-    // Detect language
     const lang = detectLanguageSmart(userMessage);
 
-    // Greeting text
-    const greetingText = lang === "tl"
-      ? `Magandang araw, ${firstName}! 👋\n\nMaligayang pagdating sa Valeenvista Residences – kinilala ng Pag-IBIG Fund bilang isa sa mga top developers sa Mindanao! 🏡✨\n\nPaano namin kayo matutulungan sa paghahanap ng inyong dream home ngayon?`
-      : `Good day, ${firstName}! 👋\n\nWelcome to Valeenvista Residences – proudly awarded by Pag-IBIG Fund as one of the top developers in Mindanao! 🏡✨\n\nHow can we assist you in finding your dream home today?`;
+    const greetingText =
+      lang === "tl"
+        ? `Magandang araw, ${firstName}! 👋\n\nMaligayang pagdating sa Valeenvista Residences – kinilala ng Pag-IBIG Fund bilang isa sa mga top developers sa Mindanao! 🏡✨\n\nPaano namin kayo matutulungan sa paghahanap ng inyong dream home ngayon?`
+        : `Good day, ${firstName}! 👋\n\nWelcome to Valeenvista Residences – proudly awarded by Pag-IBIG Fund as one of the top developers in Mindanao! 🏡✨\n\nHow can we assist you in finding your dream home today?`;
 
-    // --------------------
-    // GREETING INTENT
-    // --------------------
     if (intentName === "Default Welcome Intent") {
       await sendMessage(psid, greetingText, quickRepliesMap[lang]);
       return res.status(200).json({ fulfillmentText: "" });
     }
 
-    // --------------------
-    // FALLBACK
-    // --------------------
-    const fallbackText = lang === "tl"
-      ? "Kamusta! 👋 Pumili ng opsyon sa itaas o i-type ang inyong tanong."
-      : "Hello! 👋 Please choose an option above or type your question.";
+    const fallbackText =
+      lang === "tl"
+        ? "Kamusta! 👋 Pumili ng opsyon sa itaas o i-type ang inyong tanong."
+        : "Hello! 👋 Please choose an option above or type your question.";
 
     await sendMessage(psid, fallbackText, quickRepliesMap[lang]);
     return res.status(200).json({ fulfillmentText: "" });
-
   } catch (err) {
     console.error("🔥 Webhook error:", err);
     return res.status(500).json({ fulfillmentText: "" });
