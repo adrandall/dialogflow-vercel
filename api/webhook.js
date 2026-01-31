@@ -19,7 +19,7 @@ const quickRepliesMap = {
     { content_type: "text", title: "Presyo & Amortization", payload: "pricelist" },
     { content_type: "text", title: "Mga Kailangan", payload: "requirement" },
     { content_type: "text", title: "Lokasyon", payload: "location" },
-    { content_type: "text", title: "Impormasyon sa Contact", payload: "contact_info" },
+    { content_type: "text", title: "Kontak", payload: "contact_info" },
     { content_type: "text", title: "Oras", payload: "open_hour" },
   ],
 };
@@ -120,4 +120,5 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
