@@ -38,7 +38,7 @@ async function sendIdleMessages() {
     const now = new Date();
     
     const inactivityMinutes = 1;  // user hasn't sent a message in X minutes
-    const idleIntervalMinutes = 15; // wait at least Y minutes before sending next idle message
+    const idleIntervalMinutes = 2; // wait at least Y minutes before sending next idle message
 
     const inactivityThreshold = new Date(now.getTime() - inactivityMinutes * 60 * 1000).toISOString();
     const idleThreshold = new Date(now.getTime() - idleIntervalMinutes * 60 * 1000).toISOString();
@@ -180,6 +180,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
