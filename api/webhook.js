@@ -36,19 +36,15 @@ const quickRepliesMap = {
 async function sendIdleMessages() {
   try {
     const now = new Date();
-    
-    const inactivityMinutes = 1;  // user hasn't sent a message in X minutes
-    const idleIntervalMinutes = 2; // wait at least Y minutes before sending next idle message
-
+    const inactivityMinutes = 1; // user considered idle after X minutes
     const inactivityThreshold = new Date(now.getTime() - inactivityMinutes * 60 * 1000).toISOString();
-    const idleThreshold = new Date(now.getTime() - idleIntervalMinutes * 60 * 1000).toISOString();
 
-    // Fetch inactive users who haven't received an idle message recently
+    // Fetch users who are inactive and haven't received an idle message yet
     const { data: inactiveUsers, error } = await supabase
-  .from("user_activity")
-  .select("psid, last_active, last_idle_sent")
-  .lt("last_active", inactivityThreshold)
-  .or(`last_idle_sent.is.null,last_idle_sent.lt.${idleThreshold}`);
+      .from("user_activity")
+      .select("psid, last_active, last_idle_sent")
+      .lt("last_active", inactivityThreshold) // inactive for X minutes
+      .is("last_idle_sent", null);           // never received idle message yet
 
     if (error) {
       console.error("❌ Supabase fetch error:", error);
@@ -59,7 +55,7 @@ async function sendIdleMessages() {
       const idleText = "Thank you for your time! 👋 Please come back again.";
       await sendMessage(user.psid, idleText);
 
-      // Update last_idle_sent to now so we don't send again
+      // Mark that we sent an idle message, so it won't send again until user is active
       await supabase
         .from("user_activity")
         .update({ last_idle_sent: now.toISOString() })
@@ -180,6 +176,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
