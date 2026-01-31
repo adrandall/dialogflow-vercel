@@ -1,5 +1,5 @@
-import axios from "axios";
-import { franc } from "franc-min";
+const axios = require("axios");
+const { franc } = require("franc-min");
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
@@ -56,7 +56,7 @@ function detectLanguageSmart(text) {
 // --------------------
 // WEBHOOK
 // --------------------
-export default async (req, res) => {
+module.exports = async (req, res) => {
   try {
     if (req.method === "GET") return res.status(200).send("Webhook alive");
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
