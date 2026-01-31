@@ -65,6 +65,8 @@ async function sendIdleMessages() {
     console.error("🔥 Idle message error:", err);
   }
 }
+// Export for cron use
+export { sendIdleMessages }
 
 // --------------------
 // SEND MESSAGE
@@ -174,4 +176,5 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
