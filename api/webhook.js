@@ -1,4 +1,5 @@
 import axios from "axios";
+import { franc } from "franc-min";
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
@@ -12,20 +13,20 @@ const quickRepliesMap = {
     { content_type: "text", title: "Requirements", payload: "requirement" },
     { content_type: "text", title: "Location", payload: "location" },
     { content_type: "text", title: "Contact Info", payload: "contact_info" },
-    { content_type: "text", title: "Hours", payload: "open_hour" },
+    { content_type: "text", title: "Hours", payload: "open_hour" }
   ],
   tl: [
     { content_type: "text", title: "Ari-arian & Packages", payload: "house" },
     { content_type: "text", title: "Presyo & Amortization", payload: "pricelist" },
     { content_type: "text", title: "Mga Kailangan", payload: "requirement" },
     { content_type: "text", title: "Lokasyon", payload: "location" },
-    { content_type: "text", title: "Kontak", payload: "contact_info" },
-    { content_type: "text", title: "Oras", payload: "open_hour" },
-  ],
+    { content_type: "text", title: "Impormasyon sa Contact", payload: "contact_info" },
+    { content_type: "text", title: "Oras", payload: "open_hour" }
+  ]
 };
 
 // --------------------
-// SENDERS
+// SEND MESSAGE
 // --------------------
 async function sendMessage(psid, text, quickReplies = null) {
   try {
@@ -43,16 +44,13 @@ async function sendMessage(psid, text, quickReplies = null) {
 }
 
 // --------------------
-// LANGUAGE DETECTION
+// SMART LANGUAGE DETECTION
 // --------------------
-function detectLanguage(text) {
-  // Simple keyword check
-  const tagalogKeywords = [
-    "kumusta", "magandang", "ano", "saan", "paano", "salamat", "po", "kayo"
-  ];
-
-  const lower = text.toLowerCase();
-  return tagalogKeywords.some((word) => lower.includes(word)) ? "tl" : "en";
+function detectLanguageSmart(text) {
+  if (!text || text.length < 3) return "en"; // default English
+  const langCode = franc(text);
+  if (langCode === "tgl") return "tl"; // Tagalog
+  return "en"; // default English
 }
 
 // --------------------
@@ -82,7 +80,7 @@ export default async (req, res) => {
     let firstName = "there";
     try {
       const fbRes = await axios.get(`https://graph.facebook.com/${psid}`, {
-        params: { fields: "first_name", access_token: PAGE_ACCESS_TOKEN },
+        params: { fields: "first_name", access_token: PAGE_ACCESS_TOKEN }
       });
       firstName = fbRes.data.first_name || "there";
     } catch (err) {
@@ -90,7 +88,7 @@ export default async (req, res) => {
     }
 
     // Detect language
-    const lang = detectLanguage(userMessage);
+    const lang = detectLanguageSmart(userMessage);
 
     // Greeting text
     const greetingText = lang === "tl"
@@ -100,7 +98,7 @@ export default async (req, res) => {
     // --------------------
     // GREETING INTENT
     // --------------------
-    if (intentName === "Greeting") {
+    if (intentName === "Default Welcome Intent") {
       await sendMessage(psid, greetingText, quickRepliesMap[lang]);
       return res.status(200).json({ fulfillmentText: "" });
     }
@@ -120,5 +118,3 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
-
-
