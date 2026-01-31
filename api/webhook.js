@@ -1,5 +1,4 @@
 import axios from "axios";
-import { franc } from "franc-min";
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
@@ -44,15 +43,16 @@ async function sendMessage(psid, text, quickReplies = null) {
 }
 
 // --------------------
-// SMART LANGUAGE DETECTION
+// LANGUAGE DETECTION
 // --------------------
-function detectLanguageSmart(text) {
-  if (!text || text.length < 3) return "en"; // default English
-  const langCode = franc(text);
-  // franc returns ISO 639-3 codes
-  // 'eng' → English, 'tgl' → Tagalog/Filipino
-  if (langCode === "tgl") return "tl";
-  return "en";
+function detectLanguage(text) {
+  // Simple keyword check
+  const tagalogKeywords = [
+    "kumusta", "magandang", "ano", "saan", "paano", "salamat", "po", "kayo"
+  ];
+
+  const lower = text.toLowerCase();
+  return tagalogKeywords.some((word) => lower.includes(word)) ? "tl" : "en";
 }
 
 // --------------------
@@ -90,7 +90,7 @@ export default async (req, res) => {
     }
 
     // Detect language
-    const lang = detectLanguageSmart(userMessage);
+    const lang = detectLanguage(userMessage);
 
     // Greeting text
     const greetingText = lang === "tl"
