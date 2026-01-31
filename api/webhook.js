@@ -36,14 +36,19 @@ const quickRepliesMap = {
 async function sendIdleMessages() {
   try {
     const now = new Date();
-    const inactivityThreshold = new Date(now.getTime() - 1 * 60 * 1000).toISOString();
+    
+    const inactivityMinutes = 1;  // user hasn't sent a message in X minutes
+    const idleIntervalMinutes = 15; // wait at least Y minutes before sending next idle message
+
+    const inactivityThreshold = new Date(now.getTime() - inactivityMinutes * 60 * 1000).toISOString();
+    const idleThreshold = new Date(now.getTime() - idleIntervalMinutes * 60 * 1000).toISOString();
 
     // Fetch inactive users who haven't received an idle message recently
     const { data: inactiveUsers, error } = await supabase
-      .from("user_activity")
-      .select("psid, last_active, last_idle_sent")
-      .lt("last_active", inactivityThreshold)
-      .or("last_idle_sent.is.null,last_idle_sent.lt." + inactivityThreshold);
+  .from("user_activity")
+  .select("psid, last_active, last_idle_sent")
+  .lt("last_active", inactivityThreshold)
+  .or(`last_idle_sent.is.null,last_idle_sent.lt.${idleThreshold}`);
 
     if (error) {
       console.error("❌ Supabase fetch error:", error);
@@ -175,6 +180,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
