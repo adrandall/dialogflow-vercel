@@ -1,16 +1,29 @@
 import axios from "axios";
+import { franc } from "franc-min";
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
-// Quick replies (same for both languages)
-const quickReplies = [
-  { content_type: "text", title: "Properties & Packages", payload: "house" },
-  { content_type: "text", title: "Pricelist & Amortization", payload: "pricelist" },
-  { content_type: "text", title: "Requirements", payload: "requirement" },
-  { content_type: "text", title: "Location", payload: "location" },
-  { content_type: "text", title: "Contact Info", payload: "contact_info" },
-  { content_type: "text", title: "Hours", payload: "open_hour" },
-];
+// --------------------
+// QUICK REPLIES TRANSLATIONS
+// --------------------
+const quickRepliesMap = {
+  en: [
+    { content_type: "text", title: "Properties & Packages", payload: "house" },
+    { content_type: "text", title: "Pricelist & Amortization", payload: "pricelist" },
+    { content_type: "text", title: "Requirements", payload: "requirement" },
+    { content_type: "text", title: "Location", payload: "location" },
+    { content_type: "text", title: "Contact Info", payload: "contact_info" },
+    { content_type: "text", title: "Hours", payload: "open_hour" },
+  ],
+  tl: [
+    { content_type: "text", title: "Ari-arian & Packages", payload: "house" },
+    { content_type: "text", title: "Presyo & Amortization", payload: "pricelist" },
+    { content_type: "text", title: "Mga Kailangan", payload: "requirement" },
+    { content_type: "text", title: "Lokasyon", payload: "location" },
+    { content_type: "text", title: "Impormasyon sa Contact", payload: "contact_info" },
+    { content_type: "text", title: "Oras", payload: "open_hour" },
+  ],
+};
 
 // --------------------
 // SENDERS
@@ -31,16 +44,15 @@ async function sendMessage(psid, text, quickReplies = null) {
 }
 
 // --------------------
-// LANGUAGE DETECTION
+// SMART LANGUAGE DETECTION
 // --------------------
-function detectLanguage(text) {
-  // Very simple: if text contains common Tagalog words, treat as Tagalog
-  const tagalogKeywords = [
-    "kumusta", "magandang", "ano", "saan", "paano", "salamat", "po", "kayo"
-  ];
-
-  const lower = text.toLowerCase();
-  return tagalogKeywords.some((word) => lower.includes(word)) ? "tl" : "en";
+function detectLanguageSmart(text) {
+  if (!text || text.length < 3) return "en"; // default English
+  const langCode = franc(text);
+  // franc returns ISO 639-3 codes
+  // 'eng' → English, 'tgl' → Tagalog/Filipino
+  if (langCode === "tgl") return "tl";
+  return "en";
 }
 
 // --------------------
@@ -52,8 +64,16 @@ export default async (req, res) => {
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
     const body = req.body;
+
+    // Dialogflow intent
     const intentName = body.queryResult?.intent?.displayName || "UnknownIntent";
-    const psid = body.originalDetectIntentRequest?.payload?.data?.sender?.id;
+
+    // PSID extraction
+    let psid = body.originalDetectIntentRequest?.payload?.data?.sender?.id;
+    if (!psid && body.originalDetectIntentRequest?.payload?.sender?.id) {
+      psid = body.originalDetectIntentRequest.payload.sender.id;
+    }
+
     const userMessage = body.queryResult?.queryText || "";
 
     if (!psid) return res.status(200).json({ fulfillmentText: "" });
@@ -65,12 +85,14 @@ export default async (req, res) => {
         params: { fields: "first_name", access_token: PAGE_ACCESS_TOKEN },
       });
       firstName = fbRes.data.first_name || "there";
-    } catch {}
+    } catch (err) {
+      console.warn("⚠️ Failed to fetch first name");
+    }
 
-    // Detect language based on user message
-    const lang = detectLanguage(userMessage);
+    // Detect language
+    const lang = detectLanguageSmart(userMessage);
 
-    // Greeting texts
+    // Greeting text
     const greetingText = lang === "tl"
       ? `Magandang araw, ${firstName}! 👋\n\nMaligayang pagdating sa Valeenvista Residences – kinilala ng Pag-IBIG Fund bilang isa sa mga top developers sa Mindanao! 🏡✨\n\nPaano namin kayo matutulungan sa paghahanap ng inyong dream home ngayon?`
       : `Good day, ${firstName}! 👋\n\nWelcome to Valeenvista Residences – proudly awarded by Pag-IBIG Fund as one of the top developers in Mindanao! 🏡✨\n\nHow can we assist you in finding your dream home today?`;
@@ -78,8 +100,8 @@ export default async (req, res) => {
     // --------------------
     // GREETING INTENT
     // --------------------
-    if (intentName === "Greeting") {
-      await sendMessage(psid, greetingText, quickReplies);
+    if (intentName === "Default Welcome Intent") {
+      await sendMessage(psid, greetingText, quickRepliesMap[lang]);
       return res.status(200).json({ fulfillmentText: "" });
     }
 
@@ -90,7 +112,7 @@ export default async (req, res) => {
       ? "Kamusta! 👋 Pumili ng opsyon sa itaas o i-type ang inyong tanong."
       : "Hello! 👋 Please choose an option above or type your question.";
 
-    await sendMessage(psid, fallbackText, quickReplies);
+    await sendMessage(psid, fallbackText, quickRepliesMap[lang]);
     return res.status(200).json({ fulfillmentText: "" });
 
   } catch (err) {
@@ -98,4 +120,3 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
-
