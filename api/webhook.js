@@ -31,6 +31,42 @@ const quickRepliesMap = {
 };
 
 // --------------------
+// SEND IDLE AUTORESPONSE
+// --------------------
+async function sendIdleMessages() {
+  try {
+    // Set inactivity threshold (e.g., 15 minutes)
+    const now = new Date();
+    const threshold = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+
+    // Fetch users inactive since threshold
+    const { data: inactiveUsers, error } = await supabase
+      .from("user_activity")
+      .select("psid, last_active")
+      .lt("last_active", threshold);
+
+    if (error) {
+      console.error("❌ Supabase fetch error:", error);
+      return;
+    }
+
+    for (const user of inactiveUsers) {
+      // Send idle message
+      const idleText = "Thank you for your time! 👋 Please come back again.";
+      await sendMessage(user.psid, idleText);
+
+      // Optionally update last_active to now so we don't spam
+      await supabase
+        .from("user_activity")
+        .update({ last_active: now.toISOString() })
+        .eq("psid", user.psid);
+    }
+  } catch (err) {
+    console.error("🔥 Idle message error:", err);
+  }
+}
+
+// --------------------
 // SEND MESSAGE
 // --------------------
 async function sendMessage(psid, text, quickReplies = null) {
@@ -138,3 +174,4 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
