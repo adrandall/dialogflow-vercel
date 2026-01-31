@@ -1,14 +1,3 @@
 {
-  "version": 2,
-  "functions": {
-    "api/cron.js": {
-      "runtime": "edge"
-    }
-  },
-  "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "* * * * *"
-    }
-  ]
+  "version": 2
 }
