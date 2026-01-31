@@ -1,6 +1,12 @@
 import axios from "axios";
+import { createClient } from "@supabase/supabase-js";
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
+
+// --------------------
+// SUPABASE INIT
+// --------------------
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 // --------------------
 // QUICK REPLIES TRANSLATIONS
@@ -25,7 +31,7 @@ const quickRepliesMap = {
 };
 
 // --------------------
-// SENDERS
+// SEND MESSAGE
 // --------------------
 async function sendMessage(psid, text, quickReplies = null) {
   try {
@@ -46,13 +52,22 @@ async function sendMessage(psid, text, quickReplies = null) {
 // LANGUAGE DETECTION
 // --------------------
 function detectLanguage(text) {
-  // Simple keyword check
-  const tagalogKeywords = [
-    "kumusta", "magandang", "ano", "saan", "paano", "salamat", "po", "kayo"
-  ];
-
+  const tagalogKeywords = ["kumusta","magandang","ano","saan","paano","salamat","po","kayo"];
   const lower = text.toLowerCase();
-  return tagalogKeywords.some((word) => lower.includes(word)) ? "tl" : "en";
+  return tagalogKeywords.some(word => lower.includes(word)) ? "tl" : "en";
+}
+
+// --------------------
+// UPDATE LAST ACTIVITY
+// --------------------
+async function updateLastActivity(psid) {
+  try {
+    await supabase
+      .from("user_activity")
+      .upsert({ psid, last_active: new Date().toISOString() });
+  } catch (err) {
+    console.error("❌ Supabase upsert error:", err);
+  }
 }
 
 // --------------------
@@ -78,6 +93,9 @@ export default async (req, res) => {
 
     if (!psid) return res.status(200).json({ fulfillmentText: "" });
 
+    // Update user last activity in Supabase
+    await updateLastActivity(psid);
+
     // Fetch first name
     let firstName = "there";
     try {
@@ -100,7 +118,7 @@ export default async (req, res) => {
     // --------------------
     // GREETING INTENT
     // --------------------
-    if (intentName === "Greeting") {
+    if (intentName === "Greeting" || intentName === "Default Welcome Intent") {
       await sendMessage(psid, greetingText, quickRepliesMap[lang]);
       return res.status(200).json({ fulfillmentText: "" });
     }
