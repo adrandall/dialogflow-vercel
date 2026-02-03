@@ -181,19 +181,22 @@ export default async (req, res) => {
     // --------------------
     // OTHER INTENTS (TEXT COMES FROM DIALOGFLOW)
     // --------------------
-    if ((dfText && dfText.trim() !== "") || dfCustomPayload) {
-      // Send text if exists
-      if (dfText && dfText.trim() !== "") {
-        await sendMessage(psid, dfText);
+   const fulfillmentMessages = body.queryResult?.fulfillmentMessages || [];
+
+    for (const msg of fulfillmentMessages) {
+      // Send text messages
+      if (msg.text?.text?.[0]) {
+        await sendMessage(psid, msg.text.text[0]);
       }
     
-      // Send custom payload if exists
-      if (dfCustomPayload && dfCustomPayload.facebook) {
-        await sendMessage(psid, dfCustomPayload.facebook);
+      // Send custom payload messages (Facebook)
+      if (msg.payload?.facebook) {
+        await sendMessage(psid, msg.payload.facebook);
       }
-    
-      return res.status(200).json({ fulfillmentText: "" });
     }
+    
+    // Always return empty fulfillmentText since we handle sending manually
+    return res.status(200).json({ fulfillmentText: "" });
 
     // --------------------
     // FALLBACK
@@ -210,6 +213,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
