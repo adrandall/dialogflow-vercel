@@ -95,6 +95,24 @@ async function sendMessage(psid, textOrPayload, quickReplies = null) {
   }
 }
 
+async function sendFulfillmentMessages(psid, fulfillmentMessages) {
+  if (!fulfillmentMessages || fulfillmentMessages.length === 0) return;
+
+  for (const msg of fulfillmentMessages) {
+    // If payload exists, send it and skip text for that message
+    if (msg.payload?.facebook) {
+      await sendMessage(psid, msg.payload.facebook);
+      continue;
+    }
+
+    // Otherwise, send text if exists
+    const text = msg.text?.text?.[0];
+    if (text) {
+      await sendMessage(psid, text);
+    }
+  }
+}
+
 // --------------------
 // LANGUAGE DETECTION
 // --------------------
@@ -140,10 +158,7 @@ export default async (req, res) => {
       psid = body.originalDetectIntentRequest.payload.sender.id;
     }
 
-    const userMessage = body.queryResult?.queryText || "";
-
-    // Get Dialogflow text response (for intents with text set in Dialogflow)
-    const fulfillmentMessages = body.queryResult?.fulfillmentMessages || [];                                      
+    const userMessage = body.queryResult?.queryText || "";                                    
 
     if (!psid) return res.status(200).json({ fulfillmentText: "" });
 
@@ -177,7 +192,16 @@ if (intentName === "Greeting" || intentName === "Default Welcome Intent") {
   await sendMessage(psid, greetingText, quickRepliesMap[lang]);
   return res.status(200).json({ fulfillmentText: "" });
 } 
+    // --------------------
+    // OTHER INTENT
+    // --------------------
+    // Get Dialogflow text response (for intents with text set in Dialogflow)
+    const fulfillmentMessages = body.queryResult?.fulfillmentMessages || [];
 
+     if (fulfillmentMessages.length > 0) {
+      await sendFulfillmentMessages(psid, fulfillmentMessages);
+      return res.status(200).json({ fulfillmentText: "" });
+    }
 // --------------------
 // FALLBACK
 // --------------------
@@ -194,6 +218,7 @@ return res.status(200).json({ fulfillmentText: "" });
   }
    
 };
+
 
 
 
