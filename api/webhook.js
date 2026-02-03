@@ -13,20 +13,20 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 // --------------------
 const quickRepliesMap = {
   en: [
-    { content_type: "text", title: "Properties & Packages", payload: "house" },
-    { content_type: "text", title: "Pricelist & Amortization", payload: "pricelist" },
-    { content_type: "text", title: "Requirements", payload: "requirement" },
-    { content_type: "text", title: "Location", payload: "location" },
-    { content_type: "text", title: "Contact Info", payload: "contact_info" },
-    { content_type: "text", title: "Hours", payload: "open_hour" },
+    { content_type: "text", title: "🏠 Properties & Packages", payload: "house" },
+    { content_type: "text", title: "💰 Pricelist & Amortization", payload: "pricelist" },
+    { content_type: "text", title: "📜 Requirements", payload: "requirement" },
+    { content_type: "text", title: "📍 Location", payload: "location" },
+    { content_type: "text", title: "📞 Contact Info", payload: "contact_info" },
+    { content_type: "text", title: "⏱️ Hours", payload: "open_hour" },
   ],
   tl: [
-    { content_type: "text", title: "Ari-arian & Packages", payload: "house" },
-    { content_type: "text", title: "Presyo & Amortization", payload: "pricelist" },
-    { content_type: "text", title: "Mga Kailangan", payload: "requirement" },
-    { content_type: "text", title: "Lokasyon", payload: "location" },
-    { content_type: "text", title: "Kontak", payload: "contact_info" },
-    { content_type: "text", title: "Oras", payload: "open_hour" },
+    { content_type: "text", title: "🏠 Ari-arian & Packages", payload: "house" },
+    { content_type: "text", title: "💰 Presyo & Amortization", payload: "pricelist" },
+    { content_type: "text", title: "📜 Mga Kailangan", payload: "requirement" },
+    { content_type: "text", title: "📍 Lokasyon", payload: "location" },
+    { content_type: "text", title: "📞 Kontak", payload: "contact_info" },
+    { content_type: "text", title: "⏱️ Oras", payload: "open_hour" },
   ],
 };
 
@@ -176,6 +176,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
