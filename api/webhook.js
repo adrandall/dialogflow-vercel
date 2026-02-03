@@ -190,7 +190,8 @@ export default async (req, res) => {
         await sendMessage(psid, msg.payload.facebook);
       }
     }
-
+    // Always return empty fulfillmentText since we handle sending manually
+    return res.status(200).json({ fulfillmentText: "" });
     // --------------------
     // FALLBACK
     // --------------------
@@ -206,6 +207,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
