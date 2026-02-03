@@ -75,8 +75,10 @@ async function sendMessage(psid, textOrPayload, quickReplies = null) {
   try {
     const messagePayload = { recipient: { id: psid } };
 
-    // If a full Messenger payload is passed, use it directly
-    if (textOrPayload && textOrPayload.hasOwnProperty("attachment") || textOrPayload.hasOwnProperty("template_type")) {
+    if (
+      textOrPayload &&
+      (textOrPayload.hasOwnProperty("attachment") || textOrPayload.hasOwnProperty("template_type"))
+    ) {
       messagePayload.message = textOrPayload;
     } else {
       messagePayload.message = { text: textOrPayload || "" };
@@ -207,6 +209,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
