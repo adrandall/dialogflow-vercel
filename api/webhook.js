@@ -169,56 +169,24 @@ export default async (req, res) => {
       ? `Magandang araw, ${firstName}! 👋\n\nMaligayang pagdating sa Valeenvista Residences – kinilala ng Pag-IBIG Fund bilang isa sa mga top developers sa Mindanao! 🏡✨\n\nPaano namin kayo matutulungan sa paghahanap ng inyong dream home ngayon?`
       : `Good day, ${firstName}! 👋\n\nWelcome to Valeenvista Residences – proudly awarded by Pag-IBIG Fund as one of the top developers in Mindanao! 🏡✨\n\nHow can we assist you in finding your dream home today?`;
 
-let messageSent = false;
 
 // --------------------
 // GREETING INTENT
 // --------------------
 if (intentName === "Greeting" || intentName === "Default Welcome Intent") {
   await sendMessage(psid, greetingText, quickRepliesMap[lang]);
-  messageSent = true; // mark that a message was sent
-} else {
-  // --------------------
-  // OTHER INTENTS
-  // --------------------
-const sentMessages = new Set();
-
-  for (const msg of fulfillmentMessages) {
-    // --- Text message ---
-    const text = msg.text?.text?.[0];
-    if (text) {
-      const key = `text:${text}`;
-      if (!sentMessages.has(key)) {
-        await sendMessage(psid, text);
-        sentMessages.add(key);
-        messageSent = true;
-      }
-    }
-  
-    // --- Payload message ---
-    const payload = msg.payload?.facebook;
-    if (payload) {
-      const key = `payload:${JSON.stringify(payload)}`;
-      if (!sentMessages.has(key)) {
-        await sendMessage(psid, payload);
-        sentMessages.add(key);
-        messageSent = true;
-      }
-    }
-  }
-}
+  return res.status(200).json({ fulfillmentText: "" });
+} 
 
 // --------------------
 // FALLBACK
 // --------------------
-if (!messageSent) {
+
   const fallbackText = lang === "tl"
     ? "Kamusta! 👋 Pumili ng opsyon sa itaas o i-type ang inyong tanong."
     : "Hello! 👋 Please choose an option above or type your question.";
 
   await sendMessage(psid, fallbackText, quickRepliesMap[lang]);
-}
-
 return res.status(200).json({ fulfillmentText: "" });
   } catch (err) {
     console.error("🔥 Webhook error:", err);
@@ -226,6 +194,7 @@ return res.status(200).json({ fulfillmentText: "" });
   }
    
 };
+
 
 
 
