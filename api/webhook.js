@@ -141,10 +141,7 @@ export default async (req, res) => {
     const userMessage = body.queryResult?.queryText || "";
 
     // Get Dialogflow text response (for intents with text set in Dialogflow)
-    let dfText = body.queryResult?.fulfillmentText || "";
-    let dfCustomPayload = body.queryResult?.fulfillmentMessages?.find(
-      msg => msg.payload
-    )?.payload;                                      
+    const fulfillmentMessages = body.queryResult?.fulfillmentMessages || [];                                      
 
     if (!psid) return res.status(200).json({ fulfillmentText: "" });
 
@@ -180,8 +177,7 @@ export default async (req, res) => {
 
     // --------------------
     // OTHER INTENTS (TEXT COMES FROM DIALOGFLOW)
-    // --------------------
-   const fulfillmentMessages = body.queryResult?.fulfillmentMessages || [];
+    // -------------------
 
     for (const msg of fulfillmentMessages) {
       // Send text messages
@@ -213,6 +209,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
