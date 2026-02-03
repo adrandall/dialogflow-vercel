@@ -169,58 +169,62 @@ export default async (req, res) => {
       ? `Magandang araw, ${firstName}! 👋\n\nMaligayang pagdating sa Valeenvista Residences – kinilala ng Pag-IBIG Fund bilang isa sa mga top developers sa Mindanao! 🏡✨\n\nPaano namin kayo matutulungan sa paghahanap ng inyong dream home ngayon?`
       : `Good day, ${firstName}! 👋\n\nWelcome to Valeenvista Residences – proudly awarded by Pag-IBIG Fund as one of the top developers in Mindanao! 🏡✨\n\nHow can we assist you in finding your dream home today?`;
 
-    // --------------------
-    // GREETING INTENT
-    // --------------------
-    if (intentName === "Greeting" || intentName === "Default Welcome Intent") {
-      await sendMessage(psid, greetingText, quickRepliesMap[lang]);
-      return res.status(200).json({ fulfillmentText: "" });
+let messageSent = false;
+
+// --------------------
+// GREETING INTENT
+// --------------------
+if (intentName === "Greeting" || intentName === "Default Welcome Intent") {
+  await sendMessage(psid, greetingText, quickRepliesMap[lang]);
+  messageSent = true; // mark that a message was sent
+} else {
+  // --------------------
+  // OTHER INTENTS
+  // --------------------
+  const sentText = new Set();
+  const sentPayloads = new Set();
+
+  for (const msg of fulfillmentMessages) {
+    // Send text if not duplicate
+    const text = msg.text?.text?.[0];
+    if (text && !sentText.has(text)) {
+      await sendMessage(psid, text);
+      sentText.add(text);
+      messageSent = true;
     }
 
-    // --------------------
-    // OTHER INTENTS (TEXT COMES FROM DIALOGFLOW)
-    // -------------------
-
-      const sentText = new Set();
-      const sentPayloads = new Set();
-      
-      for (const msg of fulfillmentMessages) {
-        // Send text messages only once
-        const text = msg.text?.text?.[0];
-        if (text && !sentText.has(text)) {
-          await sendMessage(psid, text);
-          sentText.add(text);
-        }
-      
-        // Send custom payload messages only once per unique payload
-        const payload = msg.payload?.facebook;
-        if (payload) {
-          const payloadId = JSON.stringify(payload); // unique key for this payload
-          if (!sentPayloads.has(payloadId)) {
-            await sendMessage(psid, payload);
-            sentPayloads.add(payloadId);
-          }
-        }
-      } 
-    
-    // --------------------
-    // FALLBACK
-    // --------------------
-    if (sentText.size === 0 && sentPayloads.size === 0) {
-    const fallbackText = lang === "tl"
-      ? "Kamusta! 👋 Pumili ng opsyon sa itaas o i-type ang inyong tanong."
-      : "Hello! 👋 Please choose an option above or type your question.";
-
-    await sendMessage(psid, fallbackText, quickRepliesMap[lang]);
+    // Send payload if not duplicate
+    const payload = msg.payload?.facebook;
+    if (payload) {
+      const payloadId = JSON.stringify(payload); // unique key
+      if (!sentPayloads.has(payloadId)) {
+        await sendMessage(psid, payload);
+        sentPayloads.add(payloadId);
+        messageSent = true;
+      }
     }
-// Always return empty fulfillmentText since we handle sending manually
-    return res.status(200).json({ fulfillmentText: "" });
+  }
+}
+
+// --------------------
+// FALLBACK
+// --------------------
+if (!messageSent) {
+  const fallbackText = lang === "tl"
+    ? "Kamusta! 👋 Pumili ng opsyon sa itaas o i-type ang inyong tanong."
+    : "Hello! 👋 Please choose an option above or type your question.";
+
+  await sendMessage(psid, fallbackText, quickRepliesMap[lang]);
+}
+
+return res.status(200).json({ fulfillmentText: "" });
   } catch (err) {
     console.error("🔥 Webhook error:", err);
     return res.status(500).json({ fulfillmentText: "" });
   }
    
 };
+
 
 
 
