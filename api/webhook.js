@@ -175,8 +175,7 @@ export default async (req, res) => {
     // OTHER INTENTS (TEXT COMES FROM DIALOGFLOW)
     // --------------------
     if (dfText && dfText.trim() !== "") {
-      await sendMessage(psid, dfText);
-      return res.status(200).json({ fulfillmentText: "" });
+      return res.status(200).json({ fulfillmentText: dfText });
     }
     
     // Send Dialogflow custom payload if exists
@@ -204,6 +203,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
