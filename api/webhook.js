@@ -133,6 +133,12 @@ export default async (req, res) => {
 
     const userMessage = body.queryResult?.queryText || "";
 
+    // Get Dialogflow text response (for intents with text set in Dialogflow)
+    const dfText =
+    body.queryResult?.fulfillmentText ||
+    body.queryResult?.fulfillmentMessages?.[0]?.text?.text?.[0] ||
+    "";
+
     if (!psid) return res.status(200).json({ fulfillmentText: "" });
 
     // Update user last activity in Supabase
@@ -166,6 +172,14 @@ export default async (req, res) => {
     }
 
     // --------------------
+    // OTHER INTENTS (TEXT COMES FROM DIALOGFLOW)
+    // --------------------
+    if (dfText) {
+      await sendMessage(psid, dfText, quickRepliesMap[lang]); // optional quick replies
+      return res.status(200).json({ fulfillmentText: "" });
+    }
+
+    // --------------------
     // FALLBACK
     // --------------------
     const fallbackText = lang === "tl"
@@ -180,6 +194,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
