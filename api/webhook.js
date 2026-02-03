@@ -175,7 +175,7 @@ export default async (req, res) => {
     // OTHER INTENTS (TEXT COMES FROM DIALOGFLOW)
     // --------------------
     if (dfText) {
-      await sendMessage(psid, dfText, quickRepliesMap[lang]); // optional quick replies
+      await sendMessage(psid, dfText);
       return res.status(200).json({ fulfillmentText: "" });
     }
 
@@ -194,6 +194,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
