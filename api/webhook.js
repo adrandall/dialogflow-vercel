@@ -71,10 +71,17 @@ export { sendIdleMessages }
 // --------------------
 // SEND MESSAGE
 // --------------------
-async function sendMessage(psid, text, quickReplies = null) {
+async function sendMessage(psid, textOrPayload, quickReplies = null) {
   try {
-    const messagePayload = { recipient: { id: psid }, message: { text } };
-    if (quickReplies) messagePayload.message.quick_replies = quickReplies;
+    const messagePayload = { recipient: { id: psid } };
+
+    // If a full Messenger payload is passed, use it directly
+    if (textOrPayload && textOrPayload.hasOwnProperty("attachment") || textOrPayload.hasOwnProperty("template_type")) {
+      messagePayload.message = textOrPayload;
+    } else {
+      messagePayload.message = { text: textOrPayload || "" };
+      if (quickReplies) messagePayload.message.quick_replies = quickReplies;
+    }
 
     await axios.post(
       `https://graph.facebook.com/v17.0/me/messages`,
@@ -183,7 +190,7 @@ export default async (req, res) => {
       // Check if it's for Facebook
       if (dfCustomPayload.facebook) {
         const message = dfCustomPayload.facebook;
-        await sendMessage(psid, message.text || "", message.quick_replies || null);
+        await sendMessage(psid, dfCustomPayload.facebook); // send full payload directly
       }
       return res.status(200).json({ fulfillmentText: "" });
     }
@@ -203,6 +210,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
