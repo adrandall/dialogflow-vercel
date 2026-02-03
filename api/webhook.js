@@ -181,25 +181,27 @@ if (intentName === "Greeting" || intentName === "Default Welcome Intent") {
   // --------------------
   // OTHER INTENTS
   // --------------------
-  const sentText = new Set();
-  const sentPayloads = new Set();
+const sentMessages = new Set();
 
   for (const msg of fulfillmentMessages) {
-    // Send text if not duplicate
+    // --- Text message ---
     const text = msg.text?.text?.[0];
-    if (text && !sentText.has(text)) {
-      await sendMessage(psid, text);
-      sentText.add(text);
-      messageSent = true;
+    if (text) {
+      const key = `text:${text}`;
+      if (!sentMessages.has(key)) {
+        await sendMessage(psid, text);
+        sentMessages.add(key);
+        messageSent = true;
+      }
     }
-
-    // Send payload if not duplicate
+  
+    // --- Payload message ---
     const payload = msg.payload?.facebook;
     if (payload) {
-      const payloadId = JSON.stringify(payload); // unique key
-      if (!sentPayloads.has(payloadId)) {
+      const key = `payload:${JSON.stringify(payload)}`;
+      if (!sentMessages.has(key)) {
         await sendMessage(psid, payload);
-        sentPayloads.add(payloadId);
+        sentMessages.add(key);
         messageSent = true;
       }
     }
@@ -224,6 +226,7 @@ return res.status(200).json({ fulfillmentText: "" });
   }
    
 };
+
 
 
 
