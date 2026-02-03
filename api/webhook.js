@@ -180,14 +180,39 @@ export default async (req, res) => {
     // --------------------
     // OTHER INTENTS (TEXT COMES FROM DIALOGFLOW)
     // -------------------
+
+      const sentText = new Set();
+      const sentPayloads = new Set();
+      
+      for (const msg of fulfillmentMessages) {
+        // Send text messages only once
+        const text = msg.text?.text?.[0];
+        if (text && !sentText.has(text)) {
+          await sendMessage(psid, text);
+          sentText.add(text);
+        }
+      
+        // Send custom payload messages only once per unique payload
+        const payload = msg.payload?.facebook;
+        if (payload) {
+          const payloadId = JSON.stringify(payload); // unique key for this payload
+          if (!sentPayloads.has(payloadId)) {
+            await sendMessage(psid, payload);
+            sentPayloads.add(payloadId);
+          }
+        }
+      } 
+    
     // --------------------
     // FALLBACK
     // --------------------
+    if (sentText.size === 0 && sentPayloads.size === 0) {
     const fallbackText = lang === "tl"
       ? "Kamusta! 👋 Pumili ng opsyon sa itaas o i-type ang inyong tanong."
       : "Hello! 👋 Please choose an option above or type your question.";
 
     await sendMessage(psid, fallbackText, quickRepliesMap[lang]);
+    }
 // Always return empty fulfillmentText since we handle sending manually
     return res.status(200).json({ fulfillmentText: "" });
   } catch (err) {
@@ -196,6 +221,7 @@ export default async (req, res) => {
   }
    
 };
+
 
 
 
