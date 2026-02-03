@@ -36,15 +36,15 @@ const quickRepliesMap = {
 async function sendIdleMessages() {
   try {
     const now = new Date();
-    const inactivityMinutes = 1; // user considered idle after X minutes
+    const inactivityMinutes = 1; // user considered idle after 1 minute
     const inactivityThreshold = new Date(now.getTime() - inactivityMinutes * 60 * 1000).toISOString();
 
-    // Fetch users who are inactive and haven't received an idle message yet
+    // Only fetch users who are inactive AND haven't received an idle message for this session
     const { data: inactiveUsers, error } = await supabase
       .from("user_activity")
       .select("psid, last_active, last_idle_sent")
-      .lt("last_active", inactivityThreshold) // inactive for X minutes
-      .is("last_idle_sent", null);           // never received idle message yet
+      .lt("last_active", inactivityThreshold) // inactive
+      .is("last_idle_sent", null);           // idle message not sent yet
 
     if (error) {
       console.error("❌ Supabase fetch error:", error);
@@ -55,7 +55,7 @@ async function sendIdleMessages() {
       const idleText = "Thank you for your time! 👋 Please come back again.";
       await sendMessage(user.psid, idleText);
 
-      // Mark that we sent an idle message, so it won't send again until user is active
+      // Mark that we sent an idle message
       await supabase
         .from("user_activity")
         .update({ last_idle_sent: now.toISOString() })
@@ -102,7 +102,11 @@ async function updateLastActivity(psid) {
   try {
     await supabase
       .from("user_activity")
-      .upsert({ psid, last_active: new Date().toISOString() });
+      .upsert({
+        psid,
+        last_active: new Date().toISOString(),
+        last_idle_sent: null  // reset idle flag when user is active
+      });
   } catch (err) {
     console.error("❌ Supabase upsert error:", err);
   }
@@ -176,6 +180,7 @@ export default async (req, res) => {
     return res.status(500).json({ fulfillmentText: "" });
   }
 };
+
 
 
 
