@@ -180,14 +180,6 @@ export default async (req, res) => {
     // --------------------
     // OTHER INTENTS (TEXT COMES FROM DIALOGFLOW)
     // -------------------
-
-    for (const msg of fulfillmentMessages) {
-      // Send custom payload messages (Facebook)
-      if (msg.payload?.facebook) {
-        await sendMessage(psid, msg.payload.facebook);
-      }
-    }
-    return res.status(200).json({ fulfillmentText: "" });
     // --------------------
     // FALLBACK
     // --------------------
@@ -204,16 +196,6 @@ export default async (req, res) => {
   }
    
 };
-
-
-
-
-
-
-
-
-
-
 
 
 
