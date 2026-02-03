@@ -192,8 +192,7 @@ export default async (req, res) => {
         await sendMessage(psid, msg.payload.facebook);
       }
     }
-    // Always return empty fulfillmentText since we handle sending manually
-    return res.status(200).json({ fulfillmentText: "" });
+   
     // --------------------
     // FALLBACK
     // --------------------
@@ -202,13 +201,15 @@ export default async (req, res) => {
       : "Hello! 👋 Please choose an option above or type your question.";
 
     await sendMessage(psid, fallbackText, quickRepliesMap[lang]);
-    return res.status(200).json({ fulfillmentText: "" });
 
   } catch (err) {
     console.error("🔥 Webhook error:", err);
     return res.status(500).json({ fulfillmentText: "" });
   }
+   // Always return empty fulfillmentText since we handle sending manually
+    return res.status(200).json({ fulfillmentText: "" });
 };
+
 
 
 
